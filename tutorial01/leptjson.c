@@ -21,7 +21,13 @@ static int lept_parse_null(lept_context* c, lept_value* v) {
         return LEPT_PARSE_INVALID_VALUE;
     c->json += 3;
     v->type = LEPT_NULL;
-    return LEPT_PARSE_OK;
+    lept_parse_whitespace(c);
+    if(c->json[0] == '\0'){
+        return LEPT_PARSE_OK;
+    }else{
+        return LEPT_PARSE_ROOT_NOT_SINGULAR;
+    }
+    
 }
 
 static int lept_parse_value(lept_context* c, lept_value* v) {
