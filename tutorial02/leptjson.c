@@ -32,9 +32,6 @@ static int lept_parse_number(lept_context* c, lept_value* v) {
     char* end;
     const char* now;
     now = c->json;
-    if((*now != '-') && !isdigit(*now)){
-        return LEPT_PARSE_INVALID_VALUE;
-    }
     if(*now == '-'){
         ++now;
     }
