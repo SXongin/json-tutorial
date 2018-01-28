@@ -18,7 +18,7 @@ static void lept_parse_whitespace(lept_context* c) {
 }
 
 static int lept_parse_literal(lept_context* c, lept_value* v, const char* target, lept_type type){
-    int len = strlen(target);
+    size_t len = strlen(target);
     int result = strncmp(c->json, target, len);
     if(result != 0){
         return LEPT_PARSE_INVALID_VALUE;
