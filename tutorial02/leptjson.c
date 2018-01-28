@@ -1,8 +1,8 @@
 #include "leptjson.h"
 #include <assert.h>  /* assert() */
 #include <stdlib.h>  /* NULL, strtod() */
-#include <string.h>  /*strlen(), strncmp()*/
-
+#include <string.h>  /*strlen(), strncmp() */
+#include <ctype.h>   /*isdigit() */
 #define EXPECT(c, ch)       do { assert(*c->json == (ch)); c->json++; } while(0)
 
 typedef struct {
@@ -29,10 +29,58 @@ static int lept_parse_literal(lept_context* c, lept_value* v, const char* target
 
 static int lept_parse_number(lept_context* c, lept_value* v) {
     char* end;
-    /* \TODO validate number */
-    v->n = strtod(c->json, &end);
-    if (c->json == end)
+    const char* now;
+    now = c->json;
+    if((*now != '-') && !isdigit(*now)){
         return LEPT_PARSE_INVALID_VALUE;
+    }
+    if(*now == '-'){
+        ++now;
+    }
+
+    if(!isdigit(*now)){
+        return LEPT_PARSE_INVALID_VALUE;
+    }
+
+    if(*now == '0'){
+        ++now;
+    }else{/* 1 - 9*/
+        ++now;
+        while(isdigit(*now)){
+            ++now;
+        }
+    }
+
+    if(*now == '.'){
+        ++now;
+        if(!isdigit(*now)){
+            return LEPT_PARSE_INVALID_VALUE;
+        }
+        ++now;
+        while(isdigit(*now)){
+            ++now;
+        }
+    }
+
+    if(*now == 'e' || *now == 'E'){
+        ++now;
+        if(*now == '-' || *now == '+'){
+            ++now;
+        }
+        if(!isdigit(*now)){
+            return LEPT_PARSE_INVALID_VALUE;
+        }
+        ++now;
+        while(isdigit(*now)){
+            ++now;
+        }
+    }
+
+    if(!isspace(*now) && *now != '\0'){
+        return LEPT_PARSE_ROOT_NOT_SINGULAR;
+    }
+    
+    v->n = strtod(c->json, &end);
     c->json = end;
     v->type = LEPT_NUMBER;
     return LEPT_PARSE_OK;
