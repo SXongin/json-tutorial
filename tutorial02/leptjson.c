@@ -3,6 +3,7 @@
 #include <stdlib.h>  /* NULL, strtod() */
 #include <string.h>  /*strlen(), strncmp() */
 #include <ctype.h>   /*isdigit() */
+#include <errno.h>   /*errno */
 #include <math.h>    /*HuGE_VAL */
 #define EXPECT(c, ch)       do { assert(*c->json == (ch)); c->json++; } while(0)
 
@@ -77,9 +78,9 @@ static int lept_parse_number(lept_context* c, lept_value* v) {
     if(!isspace(*now) && *now != '\0'){
         return LEPT_PARSE_ROOT_NOT_SINGULAR;
     }
-    
+    errno = 0;
     v->n = strtod(c->json, &end);
-    if(v->n == HUGE_VAL || -(v->n) == HUGE_VAL){
+    if((errno == ERANGE) &&( v->n == HUGE_VAL || -(v->n) == HUGE_VAL)){
         return LEPT_PARSE_NUMBER_TOO_BIG;
     }
     c->json = end;
