@@ -191,10 +191,8 @@ static void test_access_boolean() {
     lept_value v;
     lept_init(&v);
     lept_set_boolean(&v, 1);
-    EXPECT_EQ_INT(LEPT_TRUE, lept_get_type(&v));
     EXPECT_TRUE(lept_get_boolean(&v));
     lept_set_boolean(&v, 0);
-    EXPECT_EQ_INT(LEPT_FALSE, lept_get_type(&v));
     EXPECT_FALSE(lept_get_boolean(&v));
 }
 
