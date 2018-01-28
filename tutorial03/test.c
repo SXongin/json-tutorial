@@ -199,7 +199,11 @@ static void test_access_boolean() {
 }
 
 static void test_access_number() {
-    /* \TODO */
+    lept_value v;
+    lept_init(&v);
+    lept_set_number(&v, 3.1415);
+    EXPECT_EQ_INT(LEPT_NUMBER, lept_get_type(&v));
+    EXPECT_EQ_DOUBLE(3.1415, lept_get_number(&v));
 }
 
 static void test_access_string() {
