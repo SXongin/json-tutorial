@@ -94,6 +94,24 @@ static int lept_parse_string(lept_context* c, lept_value* v) {
     for (;;) {
         char ch = *p++;
         switch (ch) {
+            case '\\':{
+                ch = *p;
+                p++;
+                switch(ch){
+                    case '\"':
+                    case '\\':
+                    case '/': *(char*)lept_context_push(c, 1) = ch; break;
+                    case 'b': *(char*)lept_context_push(c, 1) = '\b'; break;
+                    case 'f': *(char*)lept_context_push(c, 1) = '\f'; break;
+                    case 'n': *(char*)lept_context_push(c, 1) = '\n'; break;
+                    case 'r': *(char*)lept_context_push(c, 1) = '\r'; break;
+                    case 't': *(char*)lept_context_push(c, 1) = '\t'; break;
+                    default: 
+                    len = c->top - head;
+                    lept_context_pop(c, len);
+                    return LEPT_PARSE_INVALID_STRING_ESCAPE;
+                }break;
+            }
             case '\"':
                 len = c->top - head;
                 lept_set_string(v, (const char*)lept_context_pop(c, len), len);
