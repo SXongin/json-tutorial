@@ -176,7 +176,7 @@ lept_type lept_get_type(const lept_value* v) {
 }
 
 int lept_get_boolean(const lept_value* v) {
-    assert((v->type == LEPT_TRUE)||(v->type == LEPT_FALSE));
+    assert(v != NULL && ((v->type == LEPT_TRUE)||(v->type == LEPT_FALSE)));
     if(v->type == LEPT_TRUE){
         return 1;
     }else{
