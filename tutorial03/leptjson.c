@@ -105,12 +105,12 @@ static int lept_parse_string(lept_context* c, lept_value* v) {
                 switch(ch){
                     case '\"':
                     case '\\':
-                    case '/': *(char*)lept_context_push(c, 1) = ch; break;
-                    case 'b': *(char*)lept_context_push(c, 1) = '\b'; break;
-                    case 'f': *(char*)lept_context_push(c, 1) = '\f'; break;
-                    case 'n': *(char*)lept_context_push(c, 1) = '\n'; break;
-                    case 'r': *(char*)lept_context_push(c, 1) = '\r'; break;
-                    case 't': *(char*)lept_context_push(c, 1) = '\t'; break;
+                    case '/': PUTC(c, ch); break;
+                    case 'b': PUTC(c,'\b'); break;
+                    case 'f': PUTC(c, '\f'); break;
+                    case 'n': PUTC(c, '\n'); break;
+                    case 'r': PUTC(c, '\r'); break;
+                    case 't': PUTC(c, '\t'); break;
                     default: 
                     len = c->top - head;
                     lept_context_pop(c, len);
