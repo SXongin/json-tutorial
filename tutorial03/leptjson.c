@@ -93,7 +93,7 @@ static int lept_parse_string(lept_context* c, lept_value* v) {
     p = c->json;
     for (;;) {
         char ch = *p++;
-        if((ch >= '\x01' && ch <= '\x1F') || ch == '\x2F'){
+        if(((unsigned char)(ch) >= '\x01' && ch <= '\x1F') || ch == '\x2F'){
             len = c->top - head;
             lept_context_pop(c, len);
             return LEPT_PARSE_INVALID_STRING_CHAR;
