@@ -127,7 +127,7 @@ static void lept_encode_utf8(lept_context* c, unsigned u) {
 
 #define STRING_ERROR(ret) do { c->top = head; return ret; } while(0)
 
-static int lept_parse_string(lept_context* c, lept_value* v) {
+static int lept_parse_string_raw(lept_context* c, char** s, size_t* str_len){
     size_t head = c->top, len;
     unsigned u, u2;
     const char* p;
@@ -138,7 +138,8 @@ static int lept_parse_string(lept_context* c, lept_value* v) {
         switch (ch) {
             case '\"':
                 len = c->top - head;
-                lept_set_string(v, (const char*)lept_context_pop(c, len), len);
+                memcpy((*s=(char*)malloc(len*sizeof(char))), (const char*)lept_context_pop(c, len), len);
+                *str_len = len;
                 c->json = p;
                 return LEPT_PARSE_OK;
             case '\\':
@@ -179,6 +180,16 @@ static int lept_parse_string(lept_context* c, lept_value* v) {
                 PUTC(c, ch);
         }
     }
+}
+
+static int lept_parse_string(lept_context* c, lept_value* v) {
+    int ret;
+    size_t len;
+    char* s;
+    if((ret=lept_parse_string_raw(c,&s,&len))==LEPT_PARSE_OK){
+        lept_set_string(v,s,len);
+    }
+    return ret;
 }
 
 static int lept_parse_value(lept_context* c, lept_value* v);
