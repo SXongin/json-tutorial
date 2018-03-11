@@ -255,11 +255,16 @@ static int lept_parse_object(lept_context* c, lept_value* v) {
     m.k = NULL;
     size = 0;
     for (;;) {
+        char* str = NULL;
         lept_init(&m.v);
-        if((*c->json != '\"')||(lept_parse_string_raw(c,&m.k,&m.klen) != LEPT_PARSE_OK)){
+        if((*c->json != '\"')||(lept_parse_string_raw(c,&str,&m.klen) != LEPT_PARSE_OK)){
+            free(str);
             ret = LEPT_PARSE_MISS_KEY;
             break;
         }
+        memcpy((m.k = (char*)malloc(m.klen + 1)), str, m.klen);
+        m.k[m.klen] = '\0';
+        free(str);
         lept_parse_whitespace(c);
         if(*(c->json++) != ':'){
             ret = LEPT_PARSE_MISS_COLON;
