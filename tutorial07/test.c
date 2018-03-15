@@ -409,7 +409,7 @@ static void test_stringify_string() {
     TEST_ROUNDTRIP("\"\"");
     TEST_ROUNDTRIP("\"Hello\"");
     TEST_ROUNDTRIP("\"Hello\\nWorld\"");
-    TEST_ROUNDTRIP("\"\\\" \\\\ / \\b \\f \\n \\r \\t\"");
+    TEST_ROUNDTRIP("\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"");
     TEST_ROUNDTRIP("\"Hello\\u0000World\"");
 }
 
