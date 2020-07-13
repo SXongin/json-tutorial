@@ -416,16 +416,28 @@ char* lept_stringify(const lept_value* v, size_t* length) {
 }
 
 void lept_copy(lept_value* dst, const lept_value* src) {
+	size_t size;
+	size_t i;
     assert(src != NULL && dst != NULL && src != dst);
     switch (src->type) {
         case LEPT_STRING:
             lept_set_string(dst, src->u.s.s, src->u.s.len);
             break;
         case LEPT_ARRAY:
-            /* \todo */
+            size = lept_get_array_size(src);
+            lept_set_array(dst, size);
+    		for (i = 0; i < size; ++i)
+    		{
+    			lept_copy(lept_pushback_array_element(dst), lept_get_array_element(src, i));
+    		}
             break;
         case LEPT_OBJECT:
-            /* \todo */
+			size = lept_get_object_size(src);
+    		lept_set_object(dst, size);
+    		for (i = 0; i < size; ++i)
+    		{
+    			lept_copy(lept_set_object_value(dst, lept_get_object_key(src, i), lept_get_object_key_length(src, i)), lept_get_object_value(src, i));
+    		}
             break;
         default:
             lept_free(dst);
@@ -499,7 +511,17 @@ int lept_is_equal(const lept_value* lhs, const lept_value* rhs) {
                     return 0;
             return 1;
         case LEPT_OBJECT:
-            /* \todo */
+            if(lhs->u.o.size != rhs->u.o.size)
+            {
+	            return 0;
+            }
+    		for(i = 0; i < lhs->u.o.size; ++i)
+    		{
+    			if(!lept_is_equal(lept_find_object_value(rhs, lept_get_object_key(lhs,i), lept_get_object_key_length(lhs, i)), lept_get_object_value(lhs, i)))
+    			{
+    				return 0;
+    			}
+    		}
             return 1;
         default:
             return 1;
@@ -607,14 +629,41 @@ void lept_popback_array_element(lept_value* v) {
 }
 
 lept_value* lept_insert_array_element(lept_value* v, size_t index) {
+	size_t i;
     assert(v != NULL && v->type == LEPT_ARRAY && index <= v->u.a.size);
-    /* \todo */
-    return NULL;
+	if (v->u.a.size == v->u.a.capacity)
+		lept_reserve_array(v, v->u.a.capacity == 0 ? 1 : v->u.a.capacity * 2);
+    lept_init(&v->u.a.e[v->u.a.size]);
+	if(v->u.a.size > 0){
+	    for (i = v->u.a.size-1; i >= index; --i)
+		{
+			lept_move(&v->u.a.e[i + 1], &v->u.a.e[i]);
+	    	if(i == 0)
+	    	{
+	    		break;
+	    	}
+		}
+	}
+	v->u.a.size++;
+    return &v->u.a.e[index];
 }
 
 void lept_erase_array_element(lept_value* v, size_t index, size_t count) {
+	size_t i;
     assert(v != NULL && v->type == LEPT_ARRAY && index + count <= v->u.a.size);
-    /* \todo */
+	if(count == 0)
+	{
+		return;
+	}
+	for(i = index + count; i < v->u.a.size; ++i)
+	{
+		lept_move(&v->u.a.e[i - count], &v->u.a.e[i]);
+	}
+	v->u.a.size -= count;
+	for(i = v->u.a.size; i < v->u.a.capacity; ++i)
+	{
+		lept_free(&v->u.a.e[i]);
+	}
 }
 
 void lept_set_object(lept_value* v, size_t capacity) {
@@ -633,23 +682,33 @@ size_t lept_get_object_size(const lept_value* v) {
 
 size_t lept_get_object_capacity(const lept_value* v) {
     assert(v != NULL && v->type == LEPT_OBJECT);
-    /* \todo */
-    return 0;
+    return v->u.o.capacity;
 }
 
 void lept_reserve_object(lept_value* v, size_t capacity) {
     assert(v != NULL && v->type == LEPT_OBJECT);
-    /* \todo */
+  if (v->u.o.capacity < capacity) {
+    v->u.o.capacity = capacity;
+    v->u.o.m = (lept_member*)realloc(v->u.o.m, capacity * sizeof(lept_member));
+  }
 }
 
 void lept_shrink_object(lept_value* v) {
     assert(v != NULL && v->type == LEPT_OBJECT);
-    /* \todo */
+    if (v->u.o.capacity > v->u.o.size) {
+        v->u.o.capacity = v->u.o.size;
+        v->u.o.m = (lept_member*)realloc(v->u.o.m, v->u.o.capacity * sizeof(lept_member));
+    }
 }
 
 void lept_clear_object(lept_value* v) {
+	size_t i;
     assert(v != NULL && v->type == LEPT_OBJECT);
-    /* \todo */
+    for (i = 0; i < v->u.o.size; i++) {
+        free(v->u.o.m[i].k);
+        lept_free(&v->u.o.m[i].v);
+    }
+	v->u.o.size = 0;
 }
 
 const char* lept_get_object_key(const lept_value* v, size_t index) {
@@ -686,11 +745,24 @@ lept_value* lept_find_object_value(lept_value* v, const char* key, size_t klen) 
 
 lept_value* lept_set_object_value(lept_value* v, const char* key, size_t klen) {
     assert(v != NULL && v->type == LEPT_OBJECT && key != NULL);
-    /* \todo */
-    return NULL;
+	if (v->u.o.size == v->u.o.capacity)
+		lept_reserve_object(v, v->u.o.capacity == 0 ? 1 : v->u.o.capacity * 2);
+    memcpy(v->u.o.m[v->u.o.size].k = (char*)malloc(klen + 1), key,klen);
+    v->u.o.m[v->u.o.size].k[klen] = '\0';
+	v->u.o.m[v->u.o.size].klen = klen;
+	lept_init(&v->u.o.m[v->u.o.size].v);
+	return &v->u.o.m[v->u.o.size++].v;
 }
 
 void lept_remove_object_value(lept_value* v, size_t index) {
+	size_t i;
     assert(v != NULL && v->type == LEPT_OBJECT && index < v->u.o.size);
-    /* \todo */
+	free(v->u.o.m[index].k);
+    for(i = index; i < v->u.o.size - 1; ++i)
+    {
+	    v->u.o.m[i].k = v->u.o.m[i + 1].k;
+    	v->u.o.m[i].klen = v->u.o.m[i + 1].klen;
+    	lept_move(&v->u.o.m[i].v, &v->u.o.m[i + 1].v);
+    }
+	v->u.o.size--;
 }
